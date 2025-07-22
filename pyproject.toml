@@ -11,3 +11,8 @@ dependencies = [
     "marker-pdf>=1.6.2",
     "streamlit>=1.45.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    "pipelines",
+]

@@ -2,7 +2,7 @@ import json
 from llm.llm import LLMClient
 from langchain.prompts import PromptTemplate
 import pathlib
-from utils.process import MarkdownProcessor
+from markdown_process.process import MarkdownProcessor
 from typing import List, Dict, Optional
 
 
@@ -141,6 +141,7 @@ class QAGenerator:
         Returns:
             Path to the created output file
         """
+        
         with open(output_file, 'w') as file:
             json.dump(qa_pairs, file, indent=2)
         
@@ -187,19 +188,4 @@ class QAGenerator:
             "average_chunk_length": avg_chunk_length,
             "model_info": self.llm_client.get_model_info()
         }
-
-
-# Backward compatibility functions
-def generate_bible_qa_pairs(jsonl_file: str) -> List[str]:
-    """Backward compatibility function."""
-    generator = BibleQAGenerator()
-    return generator.generate_qa_pairs(jsonl_file)
-
-
-def save_qa_pairs(qa_pairs: List[str], output_file: str) -> str:
-    """Backward compatibility function."""
-    generator = BibleQAGenerator()
-    return generator.save_qa_pairs(qa_pairs, output_file)
-
-
 

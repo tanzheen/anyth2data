@@ -1,7 +1,7 @@
 import argparse
 import os
 from anyth2md.anyth2md import DocumentConverter, run_marker, run_epub
-
+from pipelines.pipelines import pdf2qa, md2qa
 
 def run_main(foldername, output_dir):
     """Legacy function for backward compatibility."""

@@ -166,33 +166,7 @@ class MarkdownProcessor:
         )
         return filled_prompt
 
-
-# Backward compatibility functions
-def remove_img_links(text):
-    """Backward compatibility function."""
-    processor = MarkdownProcessor()
-    return processor.remove_img_links(text)
-
-
-def split_markdown_by_any_heading(text: str, min_words: int = 150, join_token: str = " / ") -> List[Dict[str, str]]:
-    """Backward compatibility function."""
-    processor = MarkdownProcessor(min_words=min_words, join_token=join_token)
-    return processor.split_markdown_by_any_heading(text)
-
-
-def save_chunks_to_jsonl(chunks, output_file):
-    """Backward compatibility function."""
-    processor = MarkdownProcessor()
-    return processor.save_chunks_to_jsonl(chunks, output_file)
-
-
-def process_md_file(md_file, output_dir):
-    """Backward compatibility function."""
-    processor = MarkdownProcessor()
-    return processor.process_md_file(md_file, output_dir)
-
-
-def process_chunk(chunk, prompt_template):
-    """Backward compatibility function."""
-    processor = MarkdownProcessor()
-    return processor.process_chunk(chunk, prompt_template)
+# # test the process
+# if __name__ == "__main__":
+#     processor = MarkdownProcessor()
+#     processor.process_md_file("/Users/tannicholas/anyth2data/conversion_results/2 peter/2 peter.md", "qa_results")
