@@ -2,7 +2,7 @@ import json
 from llm.llm import LLMClient
 from langchain.prompts import PromptTemplate
 import pathlib
-from process.process import MarkdownProcessor
+from utils.process import MarkdownProcessor
 from typing import List, Dict, Optional
 
 
@@ -62,7 +62,7 @@ class QAGenerator:
                     chunks.append(json.loads(line.strip()))
         return chunks
     
-    def generate_qa_pairs(self, jsonl_file: str, template_path: str = "qa_template.md") -> List[str]:
+    def generate_qa_pairs(self, jsonl_file: str, template_path: str = "qa_message.md") -> List[str]:
         """
         Generate Q&A pairs from a JSONL file.
         
@@ -92,7 +92,7 @@ class QAGenerator:
         
         return qa_pairs
     
-    def generate_qa_pairs_with_config(self, jsonl_file: str, template_path: str = "qa_template.md",
+    def generate_qa_pairs_with_config(self, jsonl_file: str, template_path: str = "qa_message.md",
                                     temperature: float = 0.7, max_tokens: Optional[int] = None) -> List[str]:
         """
         Generate Q&A pairs with custom LLM configuration.
