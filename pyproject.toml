@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ebooklib>=0.19",
+    "langchain>=0.3.26",
+    "langchain-openai>=0.3.28",
     "marker-pdf>=1.6.2",
     "streamlit>=1.45.0",
 ]
