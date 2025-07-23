@@ -1,7 +1,10 @@
 import re
 import json
 import os
+import logging
 from typing import List, Dict
+
+logger = logging.getLogger(__name__)
 
 
 class MarkdownProcessor:
@@ -23,6 +26,7 @@ class MarkdownProcessor:
         self.min_words = min_words
         self.join_token = join_token
         self.HEADING_RE = re.compile(r'^(#{1,6})\s+(.*)$')
+        logger.debug(f"MarkdownProcessor initialized with min_words={min_words}, join_token='{join_token}'")
     
     def remove_img_links(self, text: str) -> str:
         """
@@ -34,10 +38,12 @@ class MarkdownProcessor:
         Returns:
             Cleaned text with image links removed
         """
+        logger.debug(f"Removing image links from text of length {len(text)}")
         # Remove image links
         text = re.sub(r'!\[\]\([^)]+\)', '', text)
         # Normalize excess newlines
         text = re.sub(r'\n{2,}', '\n\n', text.strip())
+        logger.debug(f"Text cleaned, new length: {len(text)}")
         return text
     
     def split_markdown_by_any_heading(self, title: str, text: str) -> List[Dict[str, str]]:
@@ -55,6 +61,7 @@ class MarkdownProcessor:
         Returns:
             List of dictionaries with "chunk_id" and "text" keys
         """
+        logger.info(f"Splitting markdown for title: {title}, text length: {len(text)}")
         chunks = []
         heading_path = [""] * 6  # slot for each possible level
         buffer_lines = []  # lines for the current chunk
@@ -67,10 +74,13 @@ class MarkdownProcessor:
         def flush_buffer():
             """Commit buffer to `chunks` if it has content."""
             if buffer_lines:
+                chunk_id = title + " / " + current_chunk_id()
+                chunk_text = "\n".join(buffer_lines).strip()
                 chunks.append({
-                    "chunk_id": title + " / " + current_chunk_id(),
-                    "text": "\n".join(buffer_lines).strip()
+                    "chunk_id": chunk_id,
+                    "text": chunk_text
                 })
+                logger.debug(f"Created chunk: {chunk_id} ({len(chunk_text)} chars)")
                 buffer_lines.clear()
 
         for line in text.splitlines():
@@ -99,6 +109,7 @@ class MarkdownProcessor:
 
         # Flush any remaining text (even if < min_words)
         flush_buffer()
+        logger.info(f"Split markdown into {len(chunks)} chunks")
         return chunks
     
     def save_chunks_to_jsonl(self, chunks: List[Dict[str, str]], output_file: str) -> None:
@@ -109,10 +120,12 @@ class MarkdownProcessor:
             chunks: List of chunk dictionaries
             output_file: Path to the output JSONL file
         """
+        logger.info(f"Saving {len(chunks)} chunks to {output_file}")
         with open(output_file, 'w') as file:
             for chunk in chunks:
                 json.dump(chunk, file)
                 file.write('\n')
+        logger.debug(f"Successfully saved chunks to {output_file}")
     
     def process_md_file(self, md_file: str, output_dir: str) -> str:
         """
@@ -125,10 +138,15 @@ class MarkdownProcessor:
         Returns:
             Path to the created JSONL file
         """
+        logger.info(f"Processing markdown file: {md_file}")
+        
         # Read the md file
         title = md_file.split("/")[-1].split(".")[0]
+        logger.debug(f"Extracted title: {title}")
+        
         with open(md_file, 'r') as file:
             md_content = file.read()
+        logger.debug(f"Read {len(md_content)} characters from file")
         
         # Clean the md file
         md_content = self.remove_img_links(md_content)
@@ -138,11 +156,13 @@ class MarkdownProcessor:
 
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
+        logger.debug(f"Ensured output directory exists: {output_dir}")
         
         # Save the chunks to a jsonl file
         output_file = os.path.join(output_dir, os.path.basename(md_file) + ".jsonl")
         self.save_chunks_to_jsonl(chunks, output_file)
         
+        logger.info(f"Successfully processed {md_file} -> {output_file}")
         return output_file
     
     def process_chunk(self, chunk: Dict[str, str], prompt_template) -> str:
@@ -159,11 +179,15 @@ class MarkdownProcessor:
         chunk_id = chunk["chunk_id"]
         chunk_text = chunk["text"]
         
-        # Format the prompt template
+        logger.debug(f"Processing chunk: {chunk_id} ({len(chunk_text)} chars)")
+        
+        # Format the prompt template using LangChain's format method
         filled_prompt = prompt_template.format(
             heading=chunk_id, 
             chunk_text=chunk_text
         )
+        
+        logger.debug(f"Formatted prompt length: {len(filled_prompt)}")
         return filled_prompt
 
 # # test the process

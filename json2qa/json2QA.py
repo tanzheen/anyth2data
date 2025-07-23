@@ -1,9 +1,12 @@
 import json
+import logging
 from llm.llm import LLMClient
 from langchain.prompts import PromptTemplate
 import pathlib
 from markdown_process.process import MarkdownProcessor
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class QAGenerator:
@@ -22,11 +25,13 @@ class QAGenerator:
             model_name: The LLM model to use for Q&A generation
             api_key: OpenAI API key (defaults to environment variable)
         """
+        logger.info(f"Initializing QAGenerator with model: {model_name}")
         self.llm_client = LLMClient(model_name, api_key)
         self.processor = MarkdownProcessor()
-        self.system_prompt = pathlib.Path("qa_system.md").read_text()
+        self.system_prompt = pathlib.Path("prompts/qa_system.md").read_text()
+        logger.debug("QAGenerator initialized successfully")
     
-    def load_template(self, template_path: str = "qa_message.md") -> PromptTemplate:
+    def load_template(self, template_path: str = "prompts/qa_message.md") -> PromptTemplate:
         """
         Load a prompt template from file.
         
@@ -36,13 +41,15 @@ class QAGenerator:
         Returns:
             LangChain PromptTemplate instance
         """
+        logger.debug(f"Loading template from: {template_path}")
         try:
             template_content = pathlib.Path(template_path).read_text()
+            logger.debug(f"Template loaded successfully ({len(template_content)} chars)")
             return PromptTemplate.from_template(
-                template_content,
-                input_variables=["heading", "chunk_text"]
+                template_content
             )
         except FileNotFoundError:
+            logger.error(f"Template file not found: {template_path}")
             raise FileNotFoundError(f"Template file not found: {template_path}")
     
     def load_jsonl_file(self, jsonl_file: str) -> List[Dict[str, str]]:
@@ -55,14 +62,16 @@ class QAGenerator:
         Returns:
             List of chunk dictionaries
         """
+        logger.info(f"Loading chunks from: {jsonl_file}")
         chunks = []
         with open(jsonl_file, 'r') as file:
             for line in file:
                 if line.strip():  # Skip empty lines
                     chunks.append(json.loads(line.strip()))
+        logger.info(f"Loaded {len(chunks)} chunks from {jsonl_file}")
         return chunks
     
-    def generate_qa_pairs(self, jsonl_file: str, template_path: str = "qa_message.md") -> List[str]:
+    def generate_qa_pairs(self, jsonl_file: str, template_path: str = "prompts/qa_message.md") -> List[str]:
         """
         Generate Q&A pairs from a JSONL file.
         
@@ -73,6 +82,8 @@ class QAGenerator:
         Returns:
             List of Q&A pair responses
         """
+        logger.info(f"Generating Q&A pairs from {jsonl_file}")
+        
         # Load the JSONL file
         chunks = self.load_jsonl_file(jsonl_file)
         
@@ -82,7 +93,8 @@ class QAGenerator:
         # Generate Q&A pairs for each chunk
         qa_pairs = []
         
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
+            logger.debug(f"Processing chunk {i+1}/{len(chunks)}: {chunk.get('chunk_id', 'Unknown')}")
             # Process the chunk with the template
             message = self.processor.process_chunk(chunk, prompt_template)
             
@@ -90,6 +102,7 @@ class QAGenerator:
             response = self.llm_client.call_llm(self.system_prompt, message)
             qa_pairs.append(response)
         
+        logger.info(f"Generated {len(qa_pairs)} Q&A pairs")
         return qa_pairs
     
     def generate_qa_pairs_with_config(self, jsonl_file: str, template_path: str = "qa_message.md",
@@ -141,10 +154,12 @@ class QAGenerator:
         Returns:
             Path to the created output file
         """
+        logger.info(f"Saving {len(qa_pairs)} Q&A pairs to {output_file}")
         
         with open(output_file, 'w') as file:
             json.dump(qa_pairs, file, indent=2)
         
+        logger.debug(f"Successfully saved Q&A pairs to {output_file}")
         return output_file
     
     def process_pipeline(self, jsonl_file: str, output_file: str, 

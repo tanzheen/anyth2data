@@ -1,8 +1,11 @@
 from langchain_openai import ChatOpenAI
-import os 
+import os
+import logging
 from langchain.schema import SystemMessage, HumanMessage
 from typing import Optional, Dict, Any
 
+logger = logging.getLogger(__name__)
+from utils.config import env
 
 class LLMClient:
     """
@@ -26,7 +29,9 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
         
+        logger.info(f"Initializing LLMClient with model: {model_name}")
         self.llm = self._create_llm()
+        logger.debug("LLMClient initialized successfully")
     
     def _create_llm(self) -> ChatOpenAI:
         """
@@ -35,7 +40,7 @@ class LLMClient:
         Returns:
             Configured ChatOpenAI instance
         """
-        return ChatOpenAI(model=self.model_name, api_key=self.api_key)
+        return ChatOpenAI(model=self.model_name, api_key=self.api_key, base_url=env.LLM_BASE_URL)
     
     def call_llm(self, system_prompt: str, user_prompt: str) -> str:
         """
@@ -48,6 +53,8 @@ class LLMClient:
         Returns:
             The LLM response content
         """
+        logger.debug(f"Calling LLM with system prompt ({len(system_prompt)} chars) and user prompt ({len(user_prompt)} chars)")
+        
         # Define messages
         messages = [
             SystemMessage(content=system_prompt),
@@ -56,6 +63,7 @@ class LLMClient:
 
         # Call the LLM
         response = self.llm(messages)
+        logger.debug(f"LLM response received ({len(response.content)} chars)")
         return response.content
     
     def call_llm_with_config(self, system_prompt: str, user_prompt: str, 
@@ -72,6 +80,8 @@ class LLMClient:
         Returns:
             The LLM response content
         """
+        logger.debug(f"Calling LLM with config: temperature={temperature}, max_tokens={max_tokens}")
+        
         # Create a temporary LLM instance with custom config
         config = {"temperature": temperature}
         if max_tokens:
@@ -91,6 +101,7 @@ class LLMClient:
 
         # Call the LLM
         response = temp_llm(messages)
+        logger.debug(f"LLM response received with config ({len(response.content)} chars)")
         return response.content
     
     def batch_call_llm(self, prompts: list, system_prompt: str) -> list:
@@ -104,23 +115,14 @@ class LLMClient:
         Returns:
             List of LLM responses
         """
+        logger.info(f"Processing batch of {len(prompts)} prompts")
         responses = []
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
+            logger.debug(f"Processing prompt {i+1}/{len(prompts)}")
             response = self.call_llm(system_prompt, prompt)
             responses.append(response)
+        logger.info(f"Batch processing completed, {len(responses)} responses received")
         return responses
 
-# Global instance for backward compatibility
-qa_llm = LLMClient("gpt-4o", os.getenv("OPENAI_API_KEY"))
 
 
-# Backward compatibility functions
-def create_llm(model_name: str, api_key: str) -> ChatOpenAI:
-    """Backward compatibility function."""
-    client = LLMClient(model_name, api_key)
-    return client.llm
-
-
-def call_llm(system_prompt: str, user_prompt: str) -> str:
-    """Backward compatibility function."""
-    return qa_llm.call_llm(system_prompt, user_prompt)

@@ -8,11 +8,8 @@ dependencies = [
     "ebooklib>=0.19",
     "langchain>=0.3.26",
     "langchain-openai>=0.3.28",
+    "openai>=1.0.0",
     "marker-pdf>=1.6.2",
     "streamlit>=1.45.0",
-]
-
-[tool.uv.workspace]
-members = [
-    "pipelines",
+    "click>=8.0.0",
 ]

@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from markdown_process.process import MarkdownProcessor
 from json2qa.json2QA import QAGenerator
 from anyth2md.anyth2md import DocumentConverter
@@ -15,7 +19,7 @@ def pdf2qa(pdf_file):
 
     json_file = md_file.split("/")[-1].split(".")[0] + ".jsonl"
     # generate the qa pairs
-    qa_generator = QAGenerator(api_key=env.LLM_API_KEY)
+    qa_generator = QAGenerator(model_name=env.LLM_NAME, api_key=env.LLM_API_KEY)
     qa_pairs = qa_generator.generate_qa_pairs(os.path.join(env.JSONL_DIR, json_file))
     # save the qa pairs
     qa_file = md_file.split("/")[-1].split(".")[0] + ".json"
@@ -28,7 +32,7 @@ def md2qa(md_file):
     processor = MarkdownProcessor()
     chunks_file = processor.process_md_file(md_file, env.JSONL_DIR)
     # generate the qa pairs
-    qa_generator = QAGenerator(api_key=env.LLM_API_KEY)
+    qa_generator = QAGenerator(model_name=env.LLM_NAME, api_key=env.LLM_API_KEY)
     qa_pairs = qa_generator.generate_qa_pairs(chunks_file)
     # save the qa pairs
     qa_file = md_file.split("/")[-1].split(".")[0] + ".json "
@@ -39,7 +43,7 @@ def md2qa(md_file):
 
 
 
-# if __name__ == "__main__":
-#     md2qa("/Users/tannicholas/anyth2data/conversion_results/2 peter/2 peter.md")
+if __name__ == "__main__":
+    md2qa("/Users/tannicholas/anyth2data/conversion_results/2 peter/2 peter.md")
 
 

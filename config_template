@@ -1,0 +1,8 @@
+LLM_API_KEY=""
+LLM_NAME="gpt-4o" 
+LLM_BASE_URL=""
+
+PDF_DIR="to_convert"
+MD_DIR="conversion_results"
+JSONL_DIR="chunk_dir"
+QA_DIR="qa_results"

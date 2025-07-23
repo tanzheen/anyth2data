@@ -1,9 +1,12 @@
 import subprocess
 import argparse
 import os
+import logging
 import ebooklib
 from ebooklib import epub
 from typing import Optional, List, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentConverter:
@@ -24,6 +27,7 @@ class DocumentConverter:
         """
         self.delete_source = delete_source
         self.verbose = verbose
+        logger.info(f"DocumentConverter initialized with delete_source={delete_source}, verbose={verbose}")
     
     def _log(self, message: str) -> None:
         """Print log message if verbose mode is enabled."""
@@ -57,10 +61,13 @@ class DocumentConverter:
         Returns:
             True if conversion was successful, False otherwise
         """
+        logger.info(f"Converting PDF to markdown: {filename} -> {output_dir}")
         if not self._check_file_exists(filename):
+            logger.error(f"File not found: {filename}")
             return False
         
         if not self._create_output_dir(output_dir):
+            logger.error(f"Failed to create output dir: {output_dir}")
             return False
         
         command = [
@@ -80,13 +87,16 @@ class DocumentConverter:
                 self._log(f"Deleted source file: {filename}")
             
             self._log(f"Successfully converted {filename} to markdown")
+            logger.info(f"Successfully converted {filename} to markdown")
             return True
 
         except subprocess.CalledProcessError as e:
             self._log(f"Command failed: {e}")
+            logger.error(f"Marker conversion failed: {e}")
             return False
         except FileNotFoundError:
             self._log("Error: 'uv' or 'marker_single' command not found. Please ensure marker is installed.")
+            logger.error("'uv' or 'marker_single' command not found.")
             return False
     
     def run_epub(self, filename: str, output_dir: str) -> bool:
@@ -100,15 +110,19 @@ class DocumentConverter:
         Returns:
             True if conversion was successful, False otherwise
         """
+        logger.info(f"Converting EPUB to markdown: {filename} -> {output_dir}")
         if not self._check_file_exists(filename):
+            logger.error(f"File not found: {filename}")
             return False
         
         if not self._create_output_dir(output_dir):
+            logger.error(f"Failed to create output dir: {output_dir}")
             return False
         
         output_file = os.path.join(output_dir, os.path.basename(filename) + ".md")
         
         try:
+            self._log(f"Converting EPUB to markdown: {filename} -> {output_file}")
             command = [
                 "pandoc", filename,
                 "-f", "epub",
@@ -125,13 +139,16 @@ class DocumentConverter:
                 self._log(f"Deleted source file: {filename}")
             
             self._log(f"Successfully converted {filename} to markdown: {output_file}")
+            logger.info(f"Successfully converted {filename} to markdown")
             return True
 
         except subprocess.CalledProcessError as e:
             self._log(f"Command failed: {e}")
+            logger.error(f"EPUB conversion failed: {e}")
             return False
         except FileNotFoundError:
             self._log("Error: 'pandoc' command not found. Please ensure pandoc is installed.")
+            logger.error("'pandoc' command not found.")
             return False
     
     def convert_file(self, filename: str, output_dir: str) -> bool:
